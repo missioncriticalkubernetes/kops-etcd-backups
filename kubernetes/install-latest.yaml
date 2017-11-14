@@ -1,0 +1,35 @@
+apiVersion: extensions/v1beta1
+kind: DaemonSet
+metadata:
+  name: kops-etcd-backups
+  namespace: kube-system
+  labels:
+    app: kops-etcd-backups
+spec:
+  updateStrategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 3
+  selector:
+    matchLabels:
+      name: kops-etcd-backups
+  template:
+    metadata:
+      labels:
+        name: kops-etcd-backups
+    spec:
+      terminationGracePeriodSeconds: 5
+      nodeSelector:
+        kubernetes.io/role: master
+      tolerations:
+      - operator: "Exists"
+      containers:
+      - name: kops-etcd-backups
+        image: missioncriticalkubernetes/kops-etcd-backups:0.0.6
+        resources:
+          limits:
+            cpu: 100m
+            memory: 100Mi
+          requests:
+            cpu: 50m
+            memory: 25Mi
