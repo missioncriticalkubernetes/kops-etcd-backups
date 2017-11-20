@@ -8,7 +8,7 @@ This application will take a snapshot of your etcd EBS' every hour. Afterwards i
 
 # Installation
 
-##### AWS Credentials
+### AWS Credentials
 
 Create an AWS-user with the following permissions:
 ```
@@ -40,7 +40,7 @@ Create a kubernetes secret to hold the credentials:
 kubectl -n kube-system create secret generic kops-etcd-backups --from-literal=AWS_ACCESS_KEY_ID=some-access-key-id --from-literal=AWS_SECRET_ACCESS_KEY=some-secret-access-key
 ```
 
-##### Install manifests
+### Install manifests
 
 ```
 kubectl apply -f https://raw.githubusercontent.com/missioncriticalkubernetes/kops-etcd-backups/master/kubernetes/install-latest.yaml
