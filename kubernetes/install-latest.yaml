@@ -1,3 +1,11 @@
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: kops-etcd-backups
+  namespace: kube-system
+...
+---
 apiVersion: extensions/v1beta1
 kind: DaemonSet
 metadata:
@@ -18,6 +26,7 @@ spec:
       labels:
         name: kops-etcd-backups
     spec:
+      serviceAccount: kops-etcd-backups
       terminationGracePeriodSeconds: 5
       nodeSelector:
         kubernetes.io/role: master
@@ -25,11 +34,23 @@ spec:
       - operator: "Exists"
       containers:
       - name: kops-etcd-backups
-        image: missioncriticalkubernetes/kops-etcd-backups:0.0.6
+        image: missioncriticalkubernetes/kops-etcd-backups:0.0.15
+        env:
+        - name: AWS_ACCESS_KEY_ID
+          valueFrom:
+            secretKeyRef:
+              name: kops-etcd-backups
+              key: AWS_ACCESS_KEY_ID
+        - name: AWS_SECRET_ACCESS_KEY
+          valueFrom:
+            secretKeyRef:
+              name: kops-etcd-backups
+              key: AWS_SECRET_ACCESS_KEY
+        imagePullPolicy: Always
         resources:
           limits:
-            cpu: 100m
-            memory: 100Mi
+            cpu: 200m
+            memory: 256Mi
           requests:
-            cpu: 50m
-            memory: 25Mi
+            cpu: 100m
+            memory: 128Mi

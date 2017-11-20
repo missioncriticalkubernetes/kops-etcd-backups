@@ -11,7 +11,9 @@ RUN apt-get update \
  && apt-get clean all \
  && rm -rf /var/lib/apt/lists/*
 
-COPY crontab /etc/cron.d/
-COPY *.sh /opt/
+COPY crontab /etc/crontab
+RUN chmod 0600 /etc/crontab
 
-CMD ["cron", "-f"]
+COPY *.sh docker-entrypoint /opt/
+
+CMD exec /opt/docker-entrypoint

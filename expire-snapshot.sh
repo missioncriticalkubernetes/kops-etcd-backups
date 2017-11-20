@@ -1,8 +1,10 @@
 #!/usr/bin/env bash
 
 # Expire EBS snapshots
+echo "Starting $0..."
 
 set -eufo pipefail
+source /opt/aws.creds
 
 SNAPSHOT_EXPIRE_MAIN=${SNAPSHOT_EXPIRE_MAIN:-true}
 
@@ -14,6 +16,7 @@ if [ "${SNAPSHOT_EXPIRE_MAIN}" == "true" ]; then
   [ -z "${volume_id}" ] && echo >&2 "Error getting volume-id" && exit 1
 
    ec2-expire-snapshots    \
+    --region ${aws_region} \
     --keep-most-recent 1   \
     --keep-first-hourly 24 \
     --keep-first-daily 7   \
