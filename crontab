@@ -1,5 +1,5 @@
 SHELL=/bin/bash
 
-0  * * * * root /opt/take-snapshot.sh   > /proc/$(cat /var/run/crond.pid)/fd/1 2>&1
-15 * * * * root /opt/expire-snapshot.sh > /proc/$(cat /var/run/crond.pid)/fd/1 2>&1
+0  * * * * root /opt/snapshot-util -c main  > /proc/$(cat /var/run/crond.pid)/fd/1 2>&1
+15 * * * * root /opt/snapshot-util -e main  > /proc/$(cat /var/run/crond.pid)/fd/1 2>&1
 #

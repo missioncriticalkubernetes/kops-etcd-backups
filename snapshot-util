@@ -1,0 +1,85 @@
+#!/usr/bin/env bash
+
+set -eufo pipefail
+
+function check_commands() {
+  for cmd in curl jq aws ec2-expire-snapshots; do
+    if ! command -v ${cmd} >/dev/null 2>/dev/null; then
+      echo >&2 "Missing command: ${cmd}"
+      exit 1
+    fi
+  done
+}
+
+function get_aws_region() {
+  AWS_REGION=$(timeout 1m curl --silent http://169.254.169.254/latest/meta-data/placement/availability-zone/ | sed 's/[a-z]\+$//')
+  [ -z "${AWS_REGION}" ] && echo >&2 "Error getting AWS region" && exit 1
+  return 0
+}
+
+function get_instance_id() {
+  INSTANCE_ID=$(timeout 1m curl --silent http://169.254.169.254/latest/meta-data/instance-id)
+  [ -z "${INSTANCE_ID}" ] && echo >&2 "Error getting instance-id" && exit 1
+  return 0
+}
+
+function get_volume_id() {
+  local volume=${1:-main}
+  case $volume in
+    main)   export device="/dev/xvdu";;
+    events) export device="/dev/xvdv";;
+    *)      echo >&2 "First argument must be 'main' or 'events'"; exit 1;;
+  esac
+
+  VOLUME_ID=$(aws ec2 describe-instances --instance=${INSTANCE_ID} --region ${AWS_REGION} | jq -r '.Reservations[0].Instances[0].BlockDeviceMappings[] | select(.DeviceName == "'${device}'") | .Ebs.VolumeId')
+  [ -z "${VOLUME_ID}" ] && echo >&2 "Error getting volume-id" && exit 1
+  return 0
+}
+
+function take_snapshot() {
+  echo "$0: Creating snapshot of '${VOLUME_ID}'"
+  local snapshot_id=$(aws ec2 create-snapshot --volume-id ${VOLUME_ID} --description "Automatic snapshot by ${HOSTNAME}" --region ${AWS_REGION} | jq -r .SnapshotId)
+
+  echo "$0: Tagging snapshot '${snapshot_id}'"
+  aws ec2 describe-tags --filters "Name=resource-id,Values=${VOLUME_ID}" --output json --region ${AWS_REGION} | jq '[.Tags[] | {"Key": .Key, "Value": .Value}] | {"DryRun": false, "Resources": ["'${snapshot_id}'"], "Tags": .}' > /tmp/tags.json
+  aws ec2 create-tags --region=${AWS_REGION} --cli-input-json file:///tmp/tags.json
+
+  rm -f /tmp/tags.json || true
+}
+
+function expire_snapshot() {
+  SNAPSHOT_RETENTION=${SNAPSHOT_RETENTION:---keep-most-recent=1 --keep-first-hourly=24 --keep-first-daily=7}
+
+  ec2-expire-snapshots $SNAPSHOT_RETENTION --region ${AWS_REGION} ${VOLUME_ID}
+}
+
+source /opt/aws.creds
+check_commands
+
+while getopts "c:e:" opt; do
+  case ${opt} in
+    c)
+      echo "$0: Creating snapshot of '${OPTARG}'"
+      get_aws_region
+      get_instance_id
+      get_volume_id ${OPTARG}
+      take_snapshot
+      ;;
+    e)
+      echo "$0: Expiring snapshot(s) of '${OPTARG}'"
+      get_aws_region
+      get_instance_id
+      get_volume_id ${OPTARG}
+      expire_snapshot
+      ;;
+    *)
+      cat <<EOF_HELP
+Usage: $0 [-c | -e] [main | events]
+Options:
+  -c  Create snapshot(s)
+  -e  Expire snapshot(s)
+EOF_HELP
+      exit 1
+      ;;
+  esac
+done
