@@ -48,12 +48,13 @@ function take_snapshot() {
 }
 
 function expire_snapshot() {
-  SNAPSHOT_RETENTION=${SNAPSHOT_RETENTION:---keep-most-recent=1 --keep-first-hourly=24 --keep-first-daily=7}
+  if [ -z ${SNAPSHOT_RETENTION+x} ] || [ -z "${SNAPSHOT_RETENTION}" ]; then
+    SNAPSHOT_RETENTION="--keep-most-recent=1 --keep-first-hourly=24 --keep-first-daily=7"
+  fi
 
   ec2-expire-snapshots $SNAPSHOT_RETENTION --region ${AWS_REGION} ${VOLUME_ID}
 }
 
-source /opt/aws.creds
 check_commands
 
 while getopts "c:e:" opt; do

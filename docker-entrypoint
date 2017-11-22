@@ -3,13 +3,14 @@
 echo "Starting..."
 
 # write creds to file
-cat <<EOF > /opt/aws.creds
-export AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
-export AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
+cat <<EOF > /opt/config
+export AWS_ACCESS_KEY_ID="${AWS_ACCESS_KEY_ID}"
+export AWS_SECRET_ACCESS_KEY="${AWS_SECRET_ACCESS_KEY}"
+export SNAPSHOT_RETENTION="${SNAPSHOT_RETENTION:---keep-most-recent=1 --keep-first-hourly=24 --keep-first-daily=7}"
 EOF
 
 # workaround for too many hardlinks
-touch /etc/crontab /etc/cron.* /etc/cron.*/* /var/spool/cron /var/spool/cron/crontabs /opt/*
+touch /etc/crontab /etc/cron.* /etc/cron.*/* /var/spool/cron /var/spool/cron/crontabs
 
 echo "Replacing process with cron..."
 exec cron -f
