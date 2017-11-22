@@ -34,7 +34,7 @@ spec:
       - operator: "Exists"
       containers:
       - name: kops-etcd-backups
-        image: missioncriticalkubernetes/kops-etcd-backups:1.0.0
+        image: missioncriticalkubernetes/kops-etcd-backups:1.0.1
         env:
         - name: AWS_ACCESS_KEY_ID
           valueFrom:
