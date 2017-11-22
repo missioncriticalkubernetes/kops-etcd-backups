@@ -4,9 +4,9 @@ echo "Starting..."
 
 # write creds to file
 cat <<EOF > /opt/config
-export AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
-export AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
-export SNAPSHOT_RETENTION=${SNAPSHOT_RETENTION:---keep-most-recent=1 --keep-first-hourly=24 --keep-first-daily=7}
+export AWS_ACCESS_KEY_ID="${AWS_ACCESS_KEY_ID}"
+export AWS_SECRET_ACCESS_KEY="${AWS_SECRET_ACCESS_KEY}"
+export SNAPSHOT_RETENTION="${SNAPSHOT_RETENTION:---keep-most-recent=1 --keep-first-hourly=24 --keep-first-daily=7}"
 EOF
 
 # workaround for too many hardlinks
