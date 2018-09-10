@@ -38,13 +38,7 @@ function get_instance_id() {
 
 function get_volume_id() {
   local volume=${1:-main}
-  case $volume in
-    main)   export device="/dev/xvdu";;
-    events) export device="/dev/xvdv";;
-    *)      echo >&2 "First argument must be 'main' or 'events'"; exit 1;;
-  esac
-
-  VOLUME_ID=$(aws ec2 describe-instances --instance=${INSTANCE_ID} --region ${AWS_REGION} | jq -r '.Reservations[0].Instances[0].BlockDeviceMappings[] | select(.DeviceName == "'${device}'") | .Ebs.VolumeId')
+  VOLUME_ID=$(aws ec2 describe-volumes --region ${AWS_REGION} --filters Name=attachment.instance-id,Values=${INSTANCE_ID} Name=tag-key,Values=k8s.io/etcd/${volume} | jq -r '.Volumes[0].VolumeId')
   [ -z "${VOLUME_ID}" ] && echo >&2 "Error getting volume-id" && exit 1
   return 0
 }
